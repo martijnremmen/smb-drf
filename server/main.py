@@ -30,22 +30,40 @@ def handle_client(c: socket.socket, addr):
         read_packet(r)
         if not r:
             break
-        c.send(send_update())
+        c.send(send_update())   
+    
 
     c.close()
     logging.info(f"Client {addr[0]}:{addr[1]} disconnected")
 
 
 def read_packet(raw_input: bytes) -> dict:
-    logging.debug("received packet:")
-    logging.debug(raw_input.hex())
 
     output =  dict(
-        score = raw_input[0:12]
+        score = bcd_toint(raw_input[0:6]),
+        time = bcd_toint(raw_input[6:9]),
+        xpos = bcd_toint(raw_input[9:10]),
+        dead = raw_input[10:11]
     )
+    logging.debug(raw_input[12:18])
+    logging.debug(raw_input)
     logging.debug(output)
 
     return output
+
+
+def bcd_toint(b: list[int]) -> int:
+    """
+    converts a list containing a BCD formatted decimal 
+    number to an integer.
+    [ 1, 2, 2] --> 122
+    """
+    output = 0
+    c = len(b) - 1
+    for i, value in enumerate(b):
+        output += value * pow(10, c - i)
+    return output
+
 
 
 def send_update() -> bytes:
@@ -56,11 +74,13 @@ def send_update() -> bytes:
         up = dpad == 3,
         down = dpad == 4,
         a = bool(random.getrandbits(1)),
-        b = bool(random.getrandbits(1))
+        b = bool(random.getrandbits(1)),
+        reset = False
     )
 
     str_packet = ''.join([str(int(v)) for v in controls.values()])
     byte_packet = str_packet.encode()
+    logging.debug(f"sent packet: {controls}")
     return byte_packet
 
 if __name__ == "__main__":
