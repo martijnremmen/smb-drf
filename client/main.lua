@@ -14,10 +14,6 @@ MemPlayerX = 0x86
 MemPlayerY = 0x3B8
 MemPlayerScreenX = 0x6D
 
-RamNametableHi = 0x20
-RamNametableLow = 0x01
-RamNametableSize = 0x2BF
-
 --Variables
 ViewRadiusX = 10
 ViewRadiusY = 10
@@ -26,8 +22,8 @@ playerX = 0
 playerY = 0
 playerRoomX = 0
 playerRoomY = 0
-playerMapX = 0
-playerMapY = 0
+MapPlayerX = 0
+MapPlayerY = 0
 
 TileDataTotal = 208
 
@@ -53,13 +49,11 @@ local function get_state()
     state["time"] = memory.readbyterange(0x07F8, 3)
     state["dead"] = memory.readbyte(0x00E)
 
-    print(state["dead"])
-
     return state
 end
 
 local function send_state(state)
-    try(c:send(state["score"] .. state["time"] .. state["xposition"] .. state["dead"] .. state["playerX"]))
+    try(c:send(state["score"] .. state["time"] .. state["xposition"] .. state["dead"]))
 end
 
 local function receive_input()
@@ -83,6 +77,9 @@ local function receive_input()
 end
 
 local function set_view_data()
+
+    local x = 0
+    local y = 0
 
     for viewX = 0, ViewRadiusX do
         for viewY = 0, ViewRadiusY do
@@ -116,8 +113,8 @@ local function set_player_data()
 	playerY = memory.readbyte(MemPlayerY) + 16
 	playerRoomX = math.floor(playerX/8)+1
 	playerRoomY = math.floor(playerY/7.5)-7
-	playerMapX = math.floor((playerX%512)/16)+1
-	playerMapY = math.floor((playerY-32)/16)+1
+	MapPlayerX = math.floor((playerX%512)/16)+1
+	MapPlayerY = math.floor((playerY-32)/16)+1
 end
 
 function set_map_data()
@@ -151,7 +148,7 @@ while (running) do
 
     set_player_data()
     set_map_data()
-    set_view_data()
+    --set_view_data()
 
     print(playerX)
 
