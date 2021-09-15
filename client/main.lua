@@ -1,4 +1,4 @@
-local socket = require("socket")
+local socket = require("socket.core")
 
 host = "localhost"
 port = 6969
@@ -6,7 +6,19 @@ port = 6969
 startState = savestate.object(1)
 savestate.save(startState)
 
-local c = socket.try(socket.connect(host, port))
+function connect(address, port, laddress, lport)
+    local sock, err = socket.tcp()
+    if not sock then return nil, err end
+    if laddress then
+        local res, err = sock:bind(laddress, lport, -1)
+        if not res then return nil, err end
+    end
+    local res, err = sock:connect(address, port)
+    if not res then return nil, err end
+    return sock
+end
+
+local c = connect(host, port)
 local try = socket.newtry(function() c:close() end)
 
 --Memory Addresses
@@ -16,7 +28,7 @@ MemPlayerScreenX = 0x6D
 
 --Variables
 ViewRadiusX = 10
-ViewRadiusY = 10
+ViewRadiusY = 12
 
 playerX = 0
 playerY = 0
@@ -28,9 +40,9 @@ MapPlayerY = 0
 TileDataTotal = 208
 
 AIView = {}
-for x = 0, ViewRadiusX do
+for x = 1, ViewRadiusX do
     AIView[x] = {}
-    for y = 0, ViewRadiusY do
+    for y = 1, ViewRadiusY do
         AIView[x][y] = 0
     end
 end
@@ -78,31 +90,22 @@ end
 
 local function set_view_data()
 
-    local x = 0
-    local y = 0
-
-    for viewX = 0, ViewRadiusX do
-        for viewY = 0, ViewRadiusY do
+    for viewX = 1, ViewRadiusX do
+        for viewY = 1, ViewRadiusY do
 
             local pageSize = 16 --tiles
 
-            local x = MapPlayerX + x - 1
-            local y = MapPlayerY + y - 1
+            local x = MapPlayerX+viewX-5
+		    local y = viewY-1
 
-            local page = math.floor(x/pageSize)
+            local page = math.floor( x / pageSize)
 
-            local xAddress = x - 16 * page + 1
-            local yAddress = y + 13 * (page % 2)
-           
-            if xAddress >= 1 and xAddress < 32 and
-               yAddress >= 1 and yAddress < 25 then
-
-                AIView[x][y] = tileMap[xAddress + 16 * yAddress]
-
+            local xAddress = x - 16*page+1
+            local yAddress = y + 13*(page%2)
+            if xAddress >= 1 and xAddress < 32 and yAddress >= 1 and yAddress <= 25 then
+                AIView[viewX][viewY] = tileMap[xAddress + 16*yAddress]
             else
-
-                AIView[x][y] = 0
-
+                AIView[viewX][viewY] = 0
             end
         end
     end
@@ -142,15 +145,38 @@ local function draw_controls(controls)
     gui.box(225, 55, 233, 63, get_color(controls['A']))
 end
 
+local function draw_ai_view()
+
+    local function get_color(value)
+        if value==1 then return "white" else return "black" end;
+    end
+
+    local startX = 50
+    local startY = 50
+    local tileSize = 4
+
+    for x = 1, ViewRadiusX do
+        for y = 1, ViewRadiusY do
+            local currentX = startX + x * tileSize
+            local currentY = startY + y * tileSize
+            gui.box(
+                currentX, 
+                currentY, 
+                currentX + tileSize, 
+                currentY + tileSize, 
+                get_color(AIView[x][y])
+            )
+        end
+    end
+end
+
 ACTIVE = true
 
 while (running) do
 
     set_player_data()
     set_map_data()
-    --set_view_data()
-
-    print(playerX)
+    set_view_data()
 
     state = get_state()
     send_state(state)
@@ -158,6 +184,7 @@ while (running) do
     controls = receive_input()
     joypad.write(1, controls)
     draw_controls(controls)
+    draw_ai_view()
 
     emu:frameadvance()
 end
