@@ -90,7 +90,10 @@ local function get_view_data(player, tileMap)
 
             local xAddress = x - 16*page+1
             local yAddress = y + 13*(page%2)
-            if xAddress >= 1 and xAddress < 32 and yAddress >= 1 and yAddress <= 25 then
+
+            if x == player.MapX-1 and y == player.MapY-1 then
+                AIView[viewX][viewY] = 2 --Mark™
+            elseif xAddress >= 1 and xAddress < 32 and yAddress >= 1 and yAddress <= 25 then
                 AIView[viewX][viewY] = tileMap[xAddress + 16*yAddress]
             else
                 AIView[viewX][viewY] = 0
@@ -146,7 +149,11 @@ end
 local function draw_ai_view(AIView)
 
     local function get_color(value)
-        if value==1 then return "white" else return "black" end;
+        if      value == 1 then return "white"   --Block
+        elseif  value == 2 then return "blue"    --Mario
+        elseif  value == 3 then return "red"     --Enemy
+        else return "black"
+        end
     end
 
     local startX = 50
@@ -178,8 +185,9 @@ while true do
     local gamestate = get_gamestate()
     send_state(gamestate, playerstate)
 
-    local controls = receive_input()
-    joypad.write(1, controls)
+    -- local controls = receive_input()
+    -- joypad.write(1, controls)
+    local controls = joypad.read(1) 
 
     draw_controls(controls)
     draw_ai_view(view)
