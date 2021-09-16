@@ -26,53 +26,26 @@ MemPlayerX = 0x86
 MemPlayerY = 0x3B8
 MemPlayerScreenX = 0x6D
 
---Variables
-ViewRadiusX = 10
-ViewRadiusY = 12
-
-playerX = 0
-playerY = 0
-playerRoomX = 0
-playerRoomY = 0
-MapPlayerX = 0
-MapPlayerY = 0
-
-TileDataTotal = 208
-
-AIView = {}
-for x = 1, ViewRadiusX do
-    AIView[x] = {}
-    for y = 1, ViewRadiusY do
-        AIView[x][y] = 0
-    end
-end
-
-tileMap = {}
-for i = 1, 2 * TileDataTotal do
-	tileMap[i] = 0
-end
 
 
-local function get_state()
+local function get_gamestate()
     local state = {}
     state["score"] = memory.readbyterange(0x07DE, 6)
-    state["xposition"] = memory.readbyterange(MemPlayerX, 1)
     state["time"] = memory.readbyterange(0x07F8, 3)
-    state["dead"] = memory.readbyte(0x00E)
 
     return state
 end
 
-local function send_state(state)
+local function send_state(gamestate, playerstate)
 
     local function str_tobyte(str)
         return str:gsub(".",function(c) return string.byte(c) end)
     end
 
     local serialized_state = {
-        str_tobyte(state["score"]),
-        str_tobyte(state["time"]),
-        str_tobyte(state["xposition"])
+        str_tobyte(gamestate.score),
+        str_tobyte(gamestate.time),
+        playerstate.x
     }
 
     try(c:send(table.concat(serialized_state)))
@@ -96,14 +69,24 @@ local function receive_input()
     return controls
 end
 
-local function set_view_data()
+local function get_view_data(player, tileMap)
+
+    local pageSize = 16 --tiles
+    local ViewRadiusX = 10
+    local ViewRadiusY = 12
+
+    local AIView = {}
+    for x = 1, ViewRadiusX do
+        AIView[x] = {}
+        for y = 1, ViewRadiusY do
+            AIView[x][y] = 0
+        end
+    end
 
     for viewX = 1, ViewRadiusX do
         for viewY = 1, ViewRadiusY do
 
-            local pageSize = 16 --tiles
-
-            local x = MapPlayerX+viewX-5
+            local x = player.MapX+viewX-5
 		    local y = viewY-1
 
             local page = math.floor( x / pageSize)
@@ -117,18 +100,30 @@ local function set_view_data()
             end
         end
     end
+
+    return AIView
 end
 
-local function set_player_data()
-    playerX = memory.readbyte(MemPlayerX) + memory.readbyte(MemPlayerScreenX)*0x100 + 4
-	playerY = memory.readbyte(MemPlayerY) + 16
-	playerRoomX = math.floor(playerX/8)+1
-	playerRoomY = math.floor(playerY/7.5)-7
-	MapPlayerX = math.floor((playerX%512)/16)+1
-	MapPlayerY = math.floor((playerY-32)/16)+1
+local function get_playerstate()
+    local player = {}
+    player.x = memory.readbyte(MemPlayerX) + memory.readbyte(MemPlayerScreenX)*0x100 + 4
+	player.y = memory.readbyte(MemPlayerY) + 16
+	player.RoomX = math.floor(player.x/8)+1
+	player.RoomY = math.floor(player.y/7.5)-7
+	player.MapX = math.floor((player.x%512)/16)+1
+	player.MapY = math.floor((player.y-32)/16)+1
+    return player
 end
 
-function set_map_data()
+function get_map_data()
+
+    local TileDataTotal = 208
+
+    local tileMap = {}
+    for i = 1, 2 * TileDataTotal do
+	    tileMap[i] = 0
+    end
+
 	for i = 1, 2 * TileDataTotal do
 		if memory.readbyte(0x500 + i-1) ~= 0 then
 			tileMap[i] = 1
@@ -136,6 +131,8 @@ function set_map_data()
 			tileMap[i] = 0
 		end
 	end
+
+    return tileMap
 end
 
 local function draw_controls(controls)
@@ -153,7 +150,7 @@ local function draw_controls(controls)
     gui.box(225, 55, 233, 63, get_color(controls['A']))
 end
 
-local function draw_ai_view()
+local function draw_ai_view(AIView)
 
     local function get_color(value)
         if value==1 then return "white" else return "black" end;
@@ -163,8 +160,8 @@ local function draw_ai_view()
     local startY = 50
     local tileSize = 4
 
-    for x = 1, ViewRadiusX do
-        for y = 1, ViewRadiusY do
+    for x = 1, #AIView do
+        for y = 1, #AIView[x] do
             local currentX = startX + x * tileSize
             local currentY = startY + y * tileSize
             gui.box(
@@ -181,17 +178,18 @@ end
 
 while true do
 
-    set_player_data()
-    set_map_data()
-    set_view_data()
+    local playerstate = get_playerstate()
+    local mapdata = get_map_data()
+    local view = get_view_data(playerstate, mapdata)
 
-    state = get_state()
-    send_state(state)
+    local gamestate = get_gamestate()
+    send_state(gamestate, playerstate)
 
-    controls = receive_input()
+    local controls = receive_input()
     joypad.write(1, controls)
+
     draw_controls(controls)
-    draw_ai_view()
+    draw_ai_view(view)
 
     emu:frameadvance()
 end

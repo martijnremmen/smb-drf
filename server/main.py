@@ -42,8 +42,7 @@ def read_packet(raw_input: bytes) -> dict:
     output =  dict(
         score = int(raw_input[0:6]),
         time = int(raw_input[6:9]),
-        xpos = raw_input[9:10].hex(),
-        dead = raw_input[10:11].hex()
+        playerx = int(raw_input[9:11])
     )
     logging.debug(f"received packet: {raw_input}")
     logging.debug(f"received values: {output}")
