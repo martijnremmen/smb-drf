@@ -25,8 +25,10 @@ local try = socket.newtry(function() c:close() end)
 MemPlayerX = 0x86
 MemPlayerY = 0x3B8
 MemPlayerScreenX = 0x6D
-
-
+MemEnemy = 0xF              --Start range for enemies (up to 5)
+MemEnemyX = 0x87
+MemEnemyY = 0xCF
+MemEnemyScreenX = 0x6E
 
 local function get_gamestate()
     local state = {}
@@ -115,20 +117,52 @@ local function get_playerstate()
     return player
 end
 
-function get_map_data()
+local function get_map_data()
 
-    local TileDataTotal = 208
-    local tileMap = {}
+    local tileDataTotal = 208
+    local mapData = {}
 
-	for i = 1, 2 * TileDataTotal do
+	for i = 1, 2 * tileDataTotal do
 		if memory.readbyte(0x500 + i-1) ~= 0 then
-			tileMap[i] = 1
+			mapData[i] = 1
 		else
-			tileMap[i] = 0
+			mapData[i] = 0
 		end
 	end
 
-    return tileMap
+    local enemies = get_enemy_data()
+    for i=1, #enemies do
+		if memory.readbyte(MemEnemy+(i-1)) ~= 0 then
+			local page = math.floor(enemies[i].X/16)
+			local xAddress = enemies[i].X - 16*page
+			local yAddress = enemies[i].Y - 1 + 13*(page%2)
+			if xAddress >= 1 and xAddress < 32 and yAddress >= 1 and yAddress <= 25 then
+				mapData[xAddress + 16*yAddress] = 3
+			end
+		end
+	end
+
+    return mapData
+end
+
+function get_enemy_data()
+
+    local enemyMaxCount = 5 --Maximum amount of enemies on screen
+    local enemies = {}
+
+	for i=1, enemyMaxCount do        
+        enemies[i] = {}
+		if memory.readbyte(MemEnemy+(i-1)) ~= 0 then
+			local enemyX = memory.readbyte(MemEnemyX+(i-1)) + memory.readbyte(MemEnemyScreenX+(i-1))*0x100
+			local enemyY = memory.readbyte(MemEnemyY+(i-1)) + 24
+            enemies[i].X = math.floor((enemyX%512)/16)+1
+		    enemies[i].Y = math.floor((enemyY-32)/16)
+        else
+            enemies[i] = -1
+        end
+	end
+
+    return enemies
 end
 
 local function draw_controls(controls)
