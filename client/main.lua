@@ -64,25 +64,34 @@ local function get_state()
 end
 
 local function send_state(state)
-    try(c:send(state["score"] .. state["time"] .. state["xposition"] .. state["dead"]))
+
+    local function str_tobyte(str)
+        return str:gsub(".",function(c) return string.byte(c) end)
+    end
+
+    local serialized_state = {
+        str_tobyte(state["score"]),
+        str_tobyte(state["time"]),
+        str_tobyte(state["xposition"])
+    }
+
+    try(c:send(table.concat(serialized_state)))
 end
 
 local function receive_input()
-    local response = try(c:receive(7))
+    local response = try(c:receive(1))
     if response == nil then return nil end;
-    local lookup_table = { ['1']=true, ['0']=false }
 
-    local l,r,u,d,a,b,reset = response:match('(%d)(%d)(%d)(%d)(%d)(%d)(%d)')
-
-    if lookup_table[reset] then savestate.load(startState) end;
+    response = string.byte( response ) -- converteer de string terug naar een byte (int)
 
     local controls = {}
-    controls["left"] = lookup_table[l]
-    controls["right"] = lookup_table[r]
-    controls["up"] = lookup_table[u]
-    controls["down"] = lookup_table[d]
-    controls["A"] = lookup_table[a]
-    controls["B"] = lookup_table[b]
+    controls["left"] = AND(response, 1) > 0
+    controls["right"] = AND(response, 2) > 0
+    controls["up"] = AND(response, 4) > 0
+    controls["down"] = AND(response, 8) > 0
+    controls["A"] = AND(response, 16) > 0
+    controls["B"] = AND(response, 32) > 0
+    print(controls)
 
     return controls
 end
