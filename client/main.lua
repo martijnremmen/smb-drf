@@ -52,7 +52,6 @@ for i = 1, 2 * TileDataTotal do
 	tileMap[i] = 0
 end
 
-running = true
 
 local function get_state()
     local state = {}
@@ -170,9 +169,8 @@ local function draw_ai_view()
     end
 end
 
-ACTIVE = true
 
-while (running) do
+while true do
 
     set_player_data()
     set_map_data()
