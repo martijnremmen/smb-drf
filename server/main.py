@@ -27,10 +27,10 @@ def handle_client(c: socket.socket, addr):
 
     while True:
         r = c.recv(4096)
-        read_packet(r)
         if not r:
             break
-        c.send(send_update())   
+        read_packet(r)
+        c.send(send_update())
     
 
     c.close()
