@@ -119,6 +119,26 @@ end
 
 local function get_map_data()
 
+    local function get_enemies()
+
+        local enemyMaxCount = 5 --Maximum amount of enemies on screen
+        local enemies = {}
+    
+        for i=1, enemyMaxCount do        
+            enemies[i] = {}
+            if memory.readbyte(MemEnemy+(i-1)) ~= 0 then
+                local enemyX = memory.readbyte(MemEnemyX+(i-1)) + memory.readbyte(MemEnemyScreenX+(i-1))*0x100
+                local enemyY = memory.readbyte(MemEnemyY+(i-1)) + 24
+                enemies[i].X = math.floor((enemyX%512)/16)+1
+                enemies[i].Y = math.floor((enemyY-32)/16)
+            else
+                enemies[i] = -1
+            end
+        end
+    
+        return enemies
+    end
+
     local tileDataTotal = 208
     local mapData = {}
 
@@ -130,7 +150,7 @@ local function get_map_data()
 		end
 	end
 
-    local enemies = get_enemy_data()
+    local enemies = get_enemies()
     for i=1, #enemies do
 		if memory.readbyte(MemEnemy+(i-1)) ~= 0 then
 			local page = math.floor(enemies[i].X/16)
@@ -143,26 +163,6 @@ local function get_map_data()
 	end
 
     return mapData
-end
-
-function get_enemy_data()
-
-    local enemyMaxCount = 5 --Maximum amount of enemies on screen
-    local enemies = {}
-
-	for i=1, enemyMaxCount do        
-        enemies[i] = {}
-		if memory.readbyte(MemEnemy+(i-1)) ~= 0 then
-			local enemyX = memory.readbyte(MemEnemyX+(i-1)) + memory.readbyte(MemEnemyScreenX+(i-1))*0x100
-			local enemyY = memory.readbyte(MemEnemyY+(i-1)) + 24
-            enemies[i].X = math.floor((enemyX%512)/16)+1
-		    enemies[i].Y = math.floor((enemyY-32)/16)
-        else
-            enemies[i] = -1
-        end
-	end
-
-    return enemies
 end
 
 local function draw_controls(controls)
