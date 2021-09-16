@@ -115,7 +115,7 @@ local function get_playerstate()
     return player
 end
 
-function set_map_data()
+function get_map_data()
 
     local TileDataTotal = 208
 
@@ -179,7 +179,7 @@ end
 while true do
 
     local playerstate = get_playerstate()
-    local mapdata = set_map_data()
+    local mapdata = get_map_data()
     local view = get_view_data(playerstate, mapdata)
 
     local gamestate = get_gamestate()
