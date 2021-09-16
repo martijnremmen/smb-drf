@@ -40,33 +40,20 @@ def handle_client(c: socket.socket, addr):
 def read_packet(raw_input: bytes) -> dict:
 
     output =  dict(
-        score = bcd_toint(raw_input[0:6]),
-        time = bcd_toint(raw_input[6:9]),
-        xpos = bcd_toint(raw_input[9:10]),
-        dead = raw_input[10:11]
+        score = int(raw_input[0:6]),
+        time = int(raw_input[6:9]),
+        xpos = raw_input[9:10].hex(),
+        dead = raw_input[10:11].hex()
     )
-    logging.debug(raw_input[12:18])
-    logging.debug(raw_input)
-    logging.debug(output)
+    logging.debug(f"received packet: {raw_input}")
+    logging.debug(f"received values: {output}")
 
-    return output
-
-
-def bcd_toint(b: list[int]) -> int:
-    """
-    converts a list containing a BCD formatted decimal 
-    number to an integer.
-    [ 1, 2, 2] --> 122
-    """
-    output = 0
-    c = len(b) - 1
-    for i, value in enumerate(b):
-        output += value * pow(10, c - i)
     return output
 
 
 
 def send_update() -> bytes:
+
     dpad = random.randint(1, 4)
     controls = dict(
         left = dpad == 1,
@@ -78,10 +65,18 @@ def send_update() -> bytes:
         reset = False
     )
 
-    str_packet = ''.join([str(int(v)) for v in controls.values()])
-    byte_packet = str_packet.encode()
-    logging.debug(f"sent packet: {controls}")
-    return byte_packet
+    # serialize the control byte
+    control_byte = 0
+    for i, value in enumerate(controls.values()):
+        control_byte += value * (2 ** i)
+    control_byte =  control_byte.to_bytes(1, 'little')
+
+    packet = bytearray()
+    packet += bytearray(control_byte)
+
+    logging.debug(f"sent values: {controls}")
+    logging.debug(f"sent packet: {packet}")
+    return packet
 
 if __name__ == "__main__":
     main()
