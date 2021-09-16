@@ -78,9 +78,6 @@ local function get_view_data(player, tileMap)
     local AIView = {}
     for x = 1, ViewRadiusX do
         AIView[x] = {}
-        for y = 1, ViewRadiusY do
-            AIView[x][y] = 0
-        end
     end
 
     for viewX = 1, ViewRadiusX do
@@ -118,11 +115,7 @@ end
 function get_map_data()
 
     local TileDataTotal = 208
-
     local tileMap = {}
-    for i = 1, 2 * TileDataTotal do
-	    tileMap[i] = 0
-    end
 
 	for i = 1, 2 * TileDataTotal do
 		if memory.readbyte(0x500 + i-1) ~= 0 then
