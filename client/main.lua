@@ -38,16 +38,22 @@ local function get_gamestate()
     return state
 end
 
-local function send_state(gamestate, playerstate)
+local function send_state(gamestate, playerstate, view)
 
     local function str_tobyte(str)
         return str:gsub(".",function(c) return string.byte(c) end)
     end
 
+    local serialized_view = {}
+    for x = 1, #view do
+        serialized_view[x] = table.concat(view[x])
+    end
+    serialized_view = table.concat(serialized_view)
+
     local serialized_state = {
         str_tobyte(gamestate.score),
         str_tobyte(gamestate.time),
-        playerstate.x
+        serialized_view
     }
 
     try(c:send(table.concat(serialized_state)))
@@ -217,7 +223,7 @@ while true do
     local view = get_view_data(playerstate, mapdata)
 
     local gamestate = get_gamestate()
-    send_state(gamestate, playerstate)
+    send_state(gamestate, playerstate, view)
 
     -- local controls = receive_input()
     -- joypad.write(1, controls)

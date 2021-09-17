@@ -37,12 +37,29 @@ def handle_client(c: socket.socket, addr):
     logging.info(f"Client {addr[0]}:{addr[1]} disconnected")
 
 
+def deserialize_view(sview: bytes) -> list[list[int]]:
+    # TODO: Make this better
+    x_tiles = 12
+
+    deserialized = []
+    for i in range(0, len(sview), x_tiles):
+        x = list(sview[i:i+x_tiles].decode('utf-8'))
+        deserialized.append(x)
+
+    view = []
+    for y in range(12):
+        view.append([])
+        for x in range(10):
+            view[y].append(deserialized[x][y])
+
+    return view
+
 def read_packet(raw_input: bytes) -> dict:
 
     output =  dict(
         score = int(raw_input[0:6]),
         time = int(raw_input[6:9]),
-        playerx = int(raw_input[9:11])
+        view = deserialize_view(raw_input[9:256])
     )
     logging.debug(f"received packet: {raw_input}")
     logging.debug(f"received values: {output}")
