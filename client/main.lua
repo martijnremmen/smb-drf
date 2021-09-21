@@ -44,11 +44,12 @@ local function send_state(gamestate, playerstate, view)
         return str:gsub(".",function(c) return string.byte(c) end)
     end
 
-    local serialized_view = {}
-    for x = 1, #view do
-        serialized_view[x] = table.concat(view[x])
+    local serialized_view = ''
+    for x = 1, 12 do
+        for y = 1, 10 do
+            serialized_view = serialized_view .. tostring(view[y][x])
     end
-    serialized_view = table.concat(serialized_view)
+    end
 
     local serialized_state = {
         str_tobyte(gamestate.score),
