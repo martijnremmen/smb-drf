@@ -48,7 +48,7 @@ local function send_state(gamestate, playerstate, view)
     for x = 1, 12 do
         for y = 1, 10 do
             serialized_view = serialized_view .. tostring(view[y][x])
-    end
+        end
     end
 
     local serialized_state = {
