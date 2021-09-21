@@ -11,16 +11,17 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 def main():
+    con, addr = get_connection()
+    handle_client(con, addr)
+
+def get_connection() -> tuple[socket.socket, set]:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind((HOST, PORT))
         s.listen(2)
         logging.info(f"listening on {s.getsockname()[0]}:{s.getsockname()[1]}")
     
-        while True:
-            con, addr = s.accept()
-            with con as c:
-                handle_client(c, addr)
+        return s.accept()
 
 
 def handle_client(c: socket.socket, addr):
