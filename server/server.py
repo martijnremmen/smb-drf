@@ -57,10 +57,10 @@ def read_packet(raw_input: bytes) -> dict:
         score = int(raw_input[0:6]),
         time = int(raw_input[6:9]),
         view = deserialize_view(raw_input[9:129]),
-        x_position = int(raw_input[129:133])
+        x_position = int(raw_input[129:133]),
+        y_position = int(raw_input[133:136]),
+        playerstate = int(raw_input[136:139])
     )
-    print(len(raw_input[129:]))
-    logging.debug(output['x_position'])
     logging.debug(f"received values: {output}")
 
     return output

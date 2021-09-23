@@ -54,7 +54,9 @@ local function send_state(gamestate, playerstate, view)
         str_tobyte(gamestate.score),
         str_tobyte(gamestate.time),
         serialized_view,
-        playerstate.x
+        string.format("%04d", playerstate.x),
+        string.format("%03d", playerstate.y),
+        string.format("%03d", playerstate.State)
     }
 
     try(c:send(table.concat(serialized_state)))
