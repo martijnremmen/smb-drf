@@ -238,6 +238,8 @@ local function initialize_client()
     emu:frameadvance()
 end
 
+emu.poweron()
+
 while not playerLoaded do
     initialize_client()
 end
