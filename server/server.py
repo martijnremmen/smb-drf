@@ -60,32 +60,20 @@ def read_packet(raw_input: bytes) -> dict:
         view = deserialize_view(raw_input[9:129]),
         x_position = int(raw_input[129:133]),
         y_position = int(raw_input[133:136]),
-        playerstate = int(raw_input[136:139])
+        playerstate = int(raw_input[136:138]),
+        viewport_y = int(raw_input[138:140])
     )
     logging.debug(f"received values: {output}")
 
     return output
 
-
-
 def create_packet(controls: dict = None) -> bytes:
-
-    dpad = random.randint(1, 4)
-    controls = dict(
-        left = dpad == 1,
-        right = dpad == 2,
-        up = dpad == 3,
-        down = dpad == 4,
-        a = bool(random.getrandbits(1)),
-        b = bool(random.getrandbits(1)),
-        reset = False
-    )
 
     # serialize the control byte
     control_byte = 0
     for i, value in enumerate(controls.values()):
         control_byte += value * (2 ** i)
-    control_byte =  control_byte.to_bytes(1, 'little')
+    control_byte = int(control_byte).to_bytes(1, 'little')
 
     packet = bytearray()
     packet += bytearray(control_byte)
