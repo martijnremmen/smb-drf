@@ -1,13 +1,7 @@
-import abc
-
 import gym
-import tensorflow as tf
 from gym import spaces
 
 import server
-
-
-import numpy as np
 
 
 class SuperMarioBrosEnvironment(gym.Env):
@@ -15,9 +9,9 @@ class SuperMarioBrosEnvironment(gym.Env):
     def __init__(self) -> None:
         super().__init__()
         self.action_space = spaces.MultiDiscrete([5, 2, 2])
-        self.observation_space = spaces.Box(low=0, high=3, shape=(12, 10), dtype='uint8')
+        self.observation_space = spaces.Box(low=0, high=3, shape=(12, 10), dtype='uint8') # TODO: Check this
 
-    def serve(self) -> None: # dit moet serve zijn, niet server
+    def serve(self) -> None:
         conn, addr = server.get_connection()
 
         self.conn = conn
@@ -25,7 +19,17 @@ class SuperMarioBrosEnvironment(gym.Env):
 
 
     def reset(self):
-        pass
+        pkt = server.create_packet(dict(
+            up = False,
+            right = False,
+            down = False,
+            left = False,
+            a = False,
+            b = False,
+            reset = True
+        ))
+        self.conn.send(pkt)
+        return
 
 
     def step(self, action):
@@ -48,12 +52,13 @@ class SuperMarioBrosEnvironment(gym.Env):
 
         observation = r['view']
         reward = r['score']
+        done = r['playerstate'] == 5 # Game done when autowalking to castle
+        info = None
         
         return observation, reward, done, info
 
 
     def close(self):
-        # TODO: close tcp session
         self.conn.close()
         pass
     
