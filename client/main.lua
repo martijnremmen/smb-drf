@@ -26,6 +26,7 @@ local MemEnemy = 0xF              -- Start range for enemies (up to 5)
 local MemEnemyX = 0x87
 local MemEnemyY = 0xCF
 local MemEnemyScreenX = 0x6E
+local MemViewPortY = 0xB5
 
 local startState = savestate.object(10)
 local playerLoaded = false
@@ -256,7 +257,10 @@ while true do
     --     savestate.load(startState)
     -- end
 
-    if playerstate.State == 11 or playerstate.State == 6 or playerstate.State == 5 or playerstate.y >= 260 then
+    if playerstate.State == 11 or 
+       playerstate.State == 6  or 
+       playerstate.State == 5  or 
+       memory.readbyte(MemViewPortY) >= 2 then
         savestate.load(startState)
     end
 
