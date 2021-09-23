@@ -28,6 +28,7 @@ class SuperMarioBrosEnvironment(gym.Env):
             reset = True
         ))
         self.conn.send(pkt)
+        self.conn.recv(1024) # After sending we should reveice a response
         return
 
     def step(self, action):
