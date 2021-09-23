@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-import socket
 import logging
 import random
+import socket
+
 import numpy as np
+
+logging.basicConfig(level=logging.INFO)
 
 BIND_ADDRESS = '127.0.0.1'
 BIND_PORT = 6969
@@ -43,8 +46,6 @@ def handle_client(c: socket.socket, addr):
 
 
 def deserialize_view(sview: bytes) -> np.array:
-
-    print(sview.decode('utf-8').split())
     temp = [ int(i) for i in sview.decode('utf-8') ]
     arr = np.array(temp, dtype='uint8')
     arr.shape = (12, 10)
