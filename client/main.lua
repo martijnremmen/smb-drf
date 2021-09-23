@@ -125,8 +125,6 @@ local function get_playerstate()
     local player = {}
     player.x = memory.readbyte(MemPlayerX) + memory.readbyte(MemPlayerScreenX)*0x100 + 4
 	player.y = memory.readbyte(MemPlayerY) + 16
-	player.RoomX = math.floor(player.x/8)+1
-	player.RoomY = math.floor(player.y/7.5)-7
 	player.MapX = math.floor((player.x%512)/16)+1
 	player.MapY = math.floor((player.y-32)/16)+1
     player.State = memory.readbyte(0xE) 
