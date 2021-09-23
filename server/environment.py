@@ -17,7 +17,6 @@ class SuperMarioBrosEnvironment(gym.Env):
         self.conn = conn
         self.client_address = addr
 
-
     def reset(self):
         pkt = server.create_packet(dict(
             up = False,
@@ -31,7 +30,6 @@ class SuperMarioBrosEnvironment(gym.Env):
         self.conn.send(pkt)
         return
 
-
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid " % (
             action,
@@ -44,19 +42,23 @@ class SuperMarioBrosEnvironment(gym.Env):
             down = action[0] == 3,
             left = action[0] == 4,
             a = action[1] == 1,
-            b = action[2] == 1
+            b = action[2] == 1,
+            reset = False
         ))
         self.conn.send(pkt)
         r = self.conn.recv(255)
         r = server.read_packet(r)
-
+        
         observation = r['view']
         reward = r['score']
-        done = r['playerstate'] == 5 # Game done when autowalking to castle
+        done = (    
+            r['playerstate'] == 4   or  # Sliding down the pole
+            r['playerstate'] == 11  or  # Dying animation
+            r['viewport_y']  >= 2       # Fallen down hole
+        )
         info = None
         
         return observation, reward, done, info
-
 
     def close(self):
         self.conn.close()
