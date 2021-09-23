@@ -42,7 +42,7 @@ def handle_client(c: socket.socket, addr):
     logging.info(f"Client {addr[0]}:{addr[1]} disconnected")
 
 
-def deserialize_view(sview: bytes) -> list[list[int]]:
+def deserialize_view(sview: bytes) -> np.array:
 
     print(sview.decode('utf-8').split())
     temp = [ int(i) for i in sview.decode('utf-8') ]
