@@ -39,7 +39,7 @@ local function get_gamestate()
     return state
 end
 
-local function send_state(gamestate, playerstate, view)
+local function send_state(gamestate, playerstate, view, viewport_y)
 
     local function str_tobyte(str)
         return str:gsub(".",function(c) return string.byte(c) end)
@@ -58,7 +58,8 @@ local function send_state(gamestate, playerstate, view)
         serialized_view,
         string.format("%04d", playerstate.x),
         string.format("%03d", playerstate.y),
-        string.format("%03d", playerstate.State)
+        string.format("%02d", playerstate.State),
+        string.format("%02d", viewport_y)
     }
 
     try(c:send(table.concat(serialized_state)))
@@ -79,7 +80,7 @@ local function receive_input()
     controls["B"] = AND(response, 32) > 0
 
     local commands = {}
-    commands["levelReset"] = AND(response, 64) > 0
+    commands["reset"] = AND(response, 64) > 0
 
     return controls, commands
 end
@@ -248,22 +249,16 @@ while true do
     local playerstate = get_playerstate()
     local mapdata = get_map_data()
     local view = get_view_data(playerstate, mapdata)
+    local viewport_y =  memory.readbyte(MemViewPortY)
 
     local gamestate = get_gamestate()
-    send_state(gamestate, playerstate, view)
+    send_state(gamestate, playerstate, view, viewport_y) 
 
-    local cocktrols, commands = receive_input()
-    -- joypad.write(1, controls)
+    local controls, commands = receive_input()
+    --joypad.write(1, controls)
     local controls = joypad.read(1) 
 
-    -- if commands["levelReset"] then
-    --     savestate.load(startState)
-    -- end
-
-    if playerstate.State == 11 or 
-       playerstate.State == 6  or 
-       playerstate.State == 5  or 
-       memory.readbyte(MemViewPortY) >= 2 then
+    if commands["reset"] then
         savestate.load(startState)
     end
 
