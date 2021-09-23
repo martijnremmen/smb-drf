@@ -1,5 +1,9 @@
+import logging
+
 from environment import SuperMarioBrosEnvironment
-from pprint import pprint
+
+logging.basicConfig(level=logging.INFO)
+
 
 def main():
     # time_step = tf_env.reset()
@@ -18,16 +22,17 @@ def main():
     #         episode_reward += next_time_step.reward.numpy()
     #     rewards.append(episode_reward)
     #     steps.append(episode_steps)
-    env = SuperMarioBrosEnvironment()
-    boi = env.action_space.sample()
-    print(
-        boi[0],
-        boi[1],
-        boi[2]
-    )
 
-    # if asdkjnaksjnd:
-        # hier iets doen als knop 'A'
+    env = SuperMarioBrosEnvironment()
+    env.serve()
+
+    while True:
+        action = env.action_space.sample()
+        observation, reward, done, info = env.step(action)
+        print(action)
+        print(observation)
+        print(reward)
+        print(done)
 
 
 if __name__ == "__main__":
