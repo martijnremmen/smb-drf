@@ -33,7 +33,7 @@ def main():
         print(observation)
         print(reward)
         print(done)
-
+        if done: env.reset()
 
 if __name__ == "__main__":
     main()
