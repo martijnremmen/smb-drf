@@ -3,8 +3,7 @@ local socket = require("socket.core")
 host = "localhost"
 port = 6969
 
-startState = savestate.object(1)
-savestate.save(startState)
+startState = savestate.object(10)
 
 function connect(address, port, laddress, lport)
     local sock, err = socket.tcp()
@@ -25,7 +24,7 @@ local try = socket.newtry(function() c:close() end)
 MemPlayerX = 0x86
 MemPlayerY = 0x3B8
 MemPlayerScreenX = 0x6D
-MemEnemy = 0xF              --Start range for enemies (up to 5)
+MemEnemy = 0xF              -- Start range for enemies (up to 5)
 MemEnemyX = 0x87
 MemEnemyY = 0xCF
 MemEnemyScreenX = 0x6E
@@ -76,7 +75,10 @@ local function receive_input()
     controls["B"] = AND(response, 32) > 0
     print(controls)
 
-    return controls
+    local commands = {}
+    commands["levelReset"] = AND(response, 64) > 0
+
+    return controls, commands
 end
 
 local function get_view_data(player, tileMap)
@@ -122,6 +124,7 @@ local function get_playerstate()
 	player.RoomY = math.floor(player.y/7.5)-7
 	player.MapX = math.floor((player.x%512)/16)+1
 	player.MapY = math.floor((player.y-32)/16)+1
+    player.State = memory.readbyte(0xE) 
     return player
 end
 
@@ -217,6 +220,7 @@ local function draw_ai_view(AIView)
     end
 end
 
+savestate.load(startState)
 
 while true do
 
@@ -227,9 +231,17 @@ while true do
     local gamestate = get_gamestate()
     send_state(gamestate, playerstate, view)
 
-    -- local controls = receive_input()
+    local cocktrols, commands = receive_input()
     -- joypad.write(1, controls)
     local controls = joypad.read(1) 
+
+    -- if commands["levelReset"] then
+    --     savestate.load(startState)
+    -- end
+
+    if playerstate.State == 11 or playerstate.State == 6 or playerstate.State == 5 or playerstate.y >= 260 then
+        savestate.load(startState)
+    end
 
     draw_controls(controls)
     draw_ai_view(view)
