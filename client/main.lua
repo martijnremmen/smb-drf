@@ -3,8 +3,6 @@ local socket = require("socket.core")
 host = "localhost"
 port = 6969
 
-startState = savestate.object(10)
-
 function connect(address, port, laddress, lport)
     local sock, err = socket.tcp()
     if not sock then return nil, err end
@@ -21,13 +19,16 @@ local c = connect(host, port)
 local try = socket.newtry(function() c:close() end)
 
 --Memory Addresses
-MemPlayerX = 0x86
-MemPlayerY = 0x3B8
-MemPlayerScreenX = 0x6D
-MemEnemy = 0xF              -- Start range for enemies (up to 5)
-MemEnemyX = 0x87
-MemEnemyY = 0xCF
-MemEnemyScreenX = 0x6E
+local MemPlayerX = 0x86
+local MemPlayerY = 0x3B8
+local MemPlayerScreenX = 0x6D
+local MemEnemy = 0xF              -- Start range for enemies (up to 5)
+local MemEnemyX = 0x87
+local MemEnemyY = 0xCF
+local MemEnemyScreenX = 0x6E
+
+local startState = savestate.object(10)
+local playerLoaded = false
 
 local function get_gamestate()
     local state = {}
@@ -72,7 +73,6 @@ local function receive_input()
     controls["down"] = AND(response, 8) > 0
     controls["A"] = AND(response, 16) > 0
     controls["B"] = AND(response, 32) > 0
-    print(controls)
 
     local commands = {}
     commands["levelReset"] = AND(response, 64) > 0
@@ -113,6 +113,7 @@ local function get_view_data(player, tileMap)
     end
 
     return AIView
+    
 end
 
 local function get_playerstate()
@@ -219,7 +220,24 @@ local function draw_ai_view(AIView)
     end
 end
 
-savestate.load(startState)
+local function initialize_client()
+
+    local flag = memory.readbyte(0x8F0)    
+    if memory.readbyte(0x764) == 0 and joypad.read(1)["start"] ~= true then
+        print("Pressing start")
+        joypad.write(1, { start = true })
+    elseif flag == 0x18 then
+        savestate.save(startState)
+        playerLoaded = true
+        print("Starting savestate initialized")
+    end
+
+    emu:frameadvance()
+end
+
+while not playerLoaded do
+    initialize_client()
+end
 
 while true do
 
