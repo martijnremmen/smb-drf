@@ -29,10 +29,6 @@ def main():
     while True:
         action = env.action_space.sample()
         observation, reward, done, info = env.step(action)
-        print(action)
-        print(observation)
-        print(reward)
-        print(done)
         if done: env.reset()
 
 if __name__ == "__main__":
