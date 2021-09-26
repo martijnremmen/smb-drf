@@ -255,8 +255,8 @@ while true do
     send_state(gamestate, playerstate, view, viewport_y) 
 
     local controls, commands = receive_input()
-    --joypad.write(1, controls)
-    local controls = joypad.read(1) 
+    joypad.write(1, controls)
+    -- local controls = joypad.read(1) 
 
     if commands["reset"] then
         savestate.load(startState)
