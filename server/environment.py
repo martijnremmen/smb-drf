@@ -10,6 +10,21 @@ class SuperMarioBrosEnvironment(gym.Env):
         super().__init__()
         self.action_space = spaces.MultiDiscrete([5, 2, 2])
         self.observation_space = spaces.Box(low=0, high=3, shape=(12, 10), dtype='uint8') # TODO: Check this
+        self.serve()
+
+    def _response_to_output(self, r: dict):
+        r = server.deserialize_packet(r)
+        
+        observation = r['view']
+        reward = r['score']
+        done = (    
+            r['playerstate'] == 4   or  # Sliding down the pole
+            r['playerstate'] == 11  or  # Dying animation
+            r['viewport_y']  >= 2       # Fallen down hole
+        )
+        info = None
+
+        return observation, reward, done, info
 
     def serve(self) -> None:
         conn, addr = server.get_connection()
@@ -28,8 +43,9 @@ class SuperMarioBrosEnvironment(gym.Env):
             reset = True
         ))
         self.conn.send(pkt)
-        self.conn.recv(1024) # After sending we should receive a response
-        return
+        r = self.conn.recv(255) # After sending we should receive a response
+        observation, _, _, _ = self._response_to_output(r)
+        return observation # Apparently `reset` should only return an observation 
 
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid " % (
@@ -48,22 +64,12 @@ class SuperMarioBrosEnvironment(gym.Env):
         ))
         self.conn.send(pkt)
         r = self.conn.recv(255)
-        r = server.read_packet(r)
         
-        observation = r['view']
-        reward = r['score']
-        done = (    
-            r['playerstate'] == 4   or  # Sliding down the pole
-            r['playerstate'] == 11  or  # Dying animation
-            r['viewport_y']  >= 2       # Fallen down hole
-        )
-        info = None
-        
-        return observation, reward, done, info
+        return self._response_to_output(r)
 
     def close(self):
         self.conn.close()
-        pass
+        return
     
 
     def render(self, mode="human") -> None:
