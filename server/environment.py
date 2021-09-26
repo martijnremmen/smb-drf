@@ -18,7 +18,7 @@ class SuperMarioBrosEnvironment(gym.Env):
         self.client_address = addr
 
     def reset(self):
-        pkt = server.create_packet(dict(
+        pkt = server.serialize_packet(dict(
             up = False,
             right = False,
             down = False,
@@ -37,7 +37,7 @@ class SuperMarioBrosEnvironment(gym.Env):
             type(action),
         )
 
-        pkt = server.create_packet(dict(
+        pkt = server.serialize_packet(dict(
             up = action[0] == 1,
             right = action[0] == 2,
             down = action[0] == 3,

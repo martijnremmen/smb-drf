@@ -37,8 +37,8 @@ def handle_client(c: socket.socket, addr):
         r = c.recv(4096)
         if not r:
             break
-        read_packet(r)
-        c.send(create_packet())
+        deserialize_packet(r)
+        c.send(serialize_packet())
     
 
     c.close()
@@ -51,7 +51,7 @@ def deserialize_view(sview: bytes) -> np.array:
     arr.shape = (12, 10)
     return arr
 
-def read_packet(raw_input: bytes) -> dict:
+def deserialize_packet(raw_input: bytes) -> dict:
 
     logging.debug(f"received packet: {raw_input}")
     output =  dict(
@@ -67,7 +67,7 @@ def read_packet(raw_input: bytes) -> dict:
 
     return output
 
-def create_packet(controls: dict = None) -> bytes:
+def serialize_packet(controls: dict = None) -> bytes:
 
     # serialize the control byte
     control_byte = 0
