@@ -22,7 +22,7 @@ class SuperMarioBrosEnvironment(gym.Env):
             r['playerstate'] == 11  or  # Dying animation
             r['viewport_y']  >= 2       # Fallen down hole
         )
-        info = None
+        info = {}
 
         return observation, reward, done, info
 
