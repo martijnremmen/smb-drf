@@ -3,21 +3,6 @@ local socket = require("socket.core")
 host = "localhost"
 port = 6969
 
-function connect(address, port, laddress, lport)
-    local sock, err = socket.tcp()
-    if not sock then return nil, err end
-    if laddress then
-        local res, err = sock:bind(laddress, lport, -1)
-        if not res then return nil, err end
-    end
-    local res, err = sock:connect(address, port)
-    if not res then return nil, err end
-    return sock
-end
-
-local c = connect(host, port)
-local try = socket.newtry(function() c:close() end)
-
 --Memory Addresses
 local MemPlayerX = 0x86
 local MemPlayerY = 0x3B8
@@ -30,6 +15,42 @@ local MemViewPortY = 0xB5
 
 local startState = savestate.object(10)
 local playerLoaded = false
+
+local function initialize_client()
+
+    local flag = memory.readbyte(0x8F0)    
+    if memory.readbyte(0x764) == 0 and joypad.read(1)["start"] ~= true then
+        print("Pressing start")
+        joypad.write(1, { start = true })
+    elseif flag == 0x18 then
+        savestate.save(startState)
+        playerLoaded = true
+        print("Starting savestate initialized")
+    end
+
+    emu:frameadvance()
+end
+
+function connect(address, port, laddress, lport)
+    local sock, err = socket.tcp()
+    if not sock then return nil, err end
+    if laddress then
+        local res, err = sock:bind(laddress, lport, -1)
+        if not res then return nil, err end
+    end
+    local res, err = sock:connect(address, port)
+    if not res then return nil, err end
+    return sock
+end
+
+emu.poweron()
+
+while not playerLoaded do
+    initialize_client()
+end
+
+local c = connect(host, port)
+local try = socket.newtry(function() c:close() end)
 
 local function get_gamestate()
     local state = {}
@@ -168,9 +189,9 @@ local function get_map_data()
     for i=1, #enemies do
 		if memory.readbyte(MemEnemy+(i-1)) ~= 0 then
 			local page = math.floor(enemies[i].X/16)
-			local xAddress = enemies[i].X - 16*page
+			local xAddress = enemies[i].X - 16*page+1
 			local yAddress = enemies[i].Y - 1 + 13*(page%2)
-			if xAddress >= 1 and xAddress < 32 and yAddress >= 1 and yAddress <= 25 then
+			if xAddress >= 1 and xAddress < 32 and yAddress >= 1 and yAddress <= 25 then 
 				mapData[xAddress + 16*yAddress] = 3
 			end
 		end
@@ -221,27 +242,6 @@ local function draw_ai_view(AIView)
             )
         end
     end
-end
-
-local function initialize_client()
-
-    local flag = memory.readbyte(0x8F0)    
-    if memory.readbyte(0x764) == 0 and joypad.read(1)["start"] ~= true then
-        print("Pressing start")
-        joypad.write(1, { start = true })
-    elseif flag == 0x18 then
-        savestate.save(startState)
-        playerLoaded = true
-        print("Starting savestate initialized")
-    end
-
-    emu:frameadvance()
-end
-
-emu.poweron()
-
-while not playerLoaded do
-    initialize_client()
 end
 
 while true do

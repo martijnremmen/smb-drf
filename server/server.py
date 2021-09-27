@@ -5,13 +5,10 @@ import socket
 
 import numpy as np
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 BIND_ADDRESS = '127.0.0.1'
 BIND_PORT = 6969
-
-logging.basicConfig(level=logging.DEBUG)
-
 
 def main():
     con, addr = get_connection()
