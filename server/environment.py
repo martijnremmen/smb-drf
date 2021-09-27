@@ -83,7 +83,3 @@ class SuperMarioBrosEnvironment(gym.Env):
 
     def render(self, mode="human") -> None:
         return None
-
-
-
-gym.register('SMB-v0', entry_point=SuperMarioBrosEnvironment)

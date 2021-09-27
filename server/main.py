@@ -14,9 +14,7 @@ from tf_agents.specs import tensor_spec
 from tf_agents.trajectories import trajectory
 from tf_agents.utils import common
 
-from tf_agents.networks import q_network
-
-import environment
+from environment import SuperMarioBrosEnvironment
 
 logging.basicConfig(level=logging.INFO)
 
@@ -30,69 +28,7 @@ def dense_layer(num_units):
 
 
 def main():
-
-    # num_iterations = 20000 # @param {type:"integer"}
-
-    # initial_collect_steps = 100  # @param {type:"integer"}
-    # collect_steps_per_iteration =   1# @param {type:"integer"}
-    # replay_buffer_max_length = 100000  # @param {type:"integer"}
-
-    # batch_size = 64  # @param {type:"integer"}
-    learning_rate = 1e-3  # @param {type:"number"}
-    # log_interval = 200  # @param {type:"integer"}
-
-    # num_eval_episodes = 10  # @param {type:"integer"}
-    # eval_interval = 1000  # @param {type:"integer"}
-
-    train_env = suite_gym.load('SMB-v0')
-
-    # # env = tf_py_environment.TFPyEnvironment(gym)
-
-    # fc_layer_params = (100, 50)
-    # action_tensor_spec = tensor_spec.from_spec(env.action_spec())
-    # num_actions = 20
-
-
-    # dense_layers = [dense_layer(num_units) for num_units in fc_layer_params]
-    # q_values_layer = tf.keras.layers.Dense(
-    #     num_actions,
-    #     activation=None,
-    #     kernel_initializer=tf.keras.initializers.RandomUniform(
-    #         minval=-0.03, maxval=0.03),
-    #     bias_initializer=tf.keras.initializers.Constant(-0.2))
-    # q_net = sequential.Sequential(dense_layers + [q_values_layer])
-
-    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-
-    # train_step_counter = tf.Variable(0)
-
-    # agent = dqn_agent.DqnAgent(
-    #     env.time_step_spec(),
-    #     env.action_spec(),
-    #     q_network=q_net,
-    #     optimizer=optimizer,
-    #     td_errors_loss_fn=common.element_wise_squared_loss,
-    #     train_step_counter=train_step_counter)
-
-
-    # TODO: QNetwork ondersteund geen multidimensionale actions
-    # moeten network.Sequential gebruiken
-    # https://www.tensorflow.org/agents/api_docs/python/tf_agents/networks/Sequential
-    q_net = q_network.QNetwork(
-        train_env.observation_spec(),
-        train_env.action_spec(),
-        fc_layer_params=(100,))
-
-    agent = dqn_agent.DqnAgent(
-        train_env.time_step_spec(),
-        train_env.action_spec(),
-        q_network=q_net,
-        optimizer=optimizer,
-        td_errors_loss_fn=common.element_wise_squared_loss,
-        train_step_counter=tf.Variable(0))
-
-
-    agent.initialize()
+    gym.register('SMB-v0', entry_point=SuperMarioBrosEnvironment)
 
 
 
