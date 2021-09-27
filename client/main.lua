@@ -168,9 +168,9 @@ local function get_map_data()
     for i=1, #enemies do
 		if memory.readbyte(MemEnemy+(i-1)) ~= 0 then
 			local page = math.floor(enemies[i].X/16)
-			local xAddress = enemies[i].X - 16*page
+			local xAddress = enemies[i].X - 16*page+1
 			local yAddress = enemies[i].Y - 1 + 13*(page%2)
-			if xAddress >= 1 and xAddress < 32 and yAddress >= 1 and yAddress <= 25 then
+			if xAddress >= 1 and xAddress < 32 and yAddress >= 1 and yAddress <= 25 then 
 				mapData[xAddress + 16*yAddress] = 3
 			end
 		end
