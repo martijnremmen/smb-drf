@@ -48,7 +48,7 @@ class SuperMarioBrosEnvironment(gym.Env):
         ))
         self.conn.send(pkt)
         r = self.conn.recv(255)
-        r = server.read_packet(r)
+        r = server.deserialize_packet(r)
         
         observation = r['view']
         reward = r['score']
