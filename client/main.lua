@@ -174,12 +174,18 @@ local function get_map_data()
         return enemies
     end
 
+    object_id = {
+        [0xC2] = 4     --Coins   
+    }
+
     local tileDataTotal = 208
     local mapData = {}
 
 	for i = 1, 2 * tileDataTotal do
-		if memory.readbyte(0x500 + i-1) ~= 0 then
-			mapData[i] = 1
+        local tileId = memory.readbyte(0x500 + i-1)
+        local objectId = object_id[tileId]
+		if tileId ~= 0 then
+			mapData[i] = (objectId ~= nil and objectId or 1)    --Defaults to block id if not defined in object_id table
 		else
 			mapData[i] = 0
 		end
@@ -217,13 +223,13 @@ end
 
 local function draw_ai_view(AIView)
 
-    local function get_color(value)
-        if      value == 1 then return "white"   --Block
-        elseif  value == 2 then return "blue"    --Mario
-        elseif  value == 3 then return "red"     --Enemy
-        else return "black"
-        end
-    end
+    local object_color = {
+        [1] = "white",  --Block
+        [2] = "blue",   --Mario
+        [3] = "red",    --Enemy
+        [4] = "yellow", --Coin
+        [5] = "green"   --Powerup
+    }
 
     local startX = 50
     local startY = 50
@@ -238,7 +244,7 @@ local function draw_ai_view(AIView)
                 currentY, 
                 currentX + tileSize, 
                 currentY + tileSize, 
-                get_color(AIView[x][y])
+                object_color[AIView[x][y]]
             )
         end
     end
@@ -264,6 +270,8 @@ while true do
 
     draw_controls(controls)
     draw_ai_view(view)
+
+    print(playerstate.x)
 
     emu:frameadvance()
 end
