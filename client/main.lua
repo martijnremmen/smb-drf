@@ -135,7 +135,7 @@ local function get_view_data(player, tileMap)
 
             if x == player.MapX-1 and y == player.MapY-1 then
                 AIView[viewX][viewY] = 2 --Mark™
-                AIView[viewX][viewY-1] = memory.readbyte(MemPowerUpState) > 0 and 2 or AIView[viewX-1][viewY]
+                AIView[viewX][viewY-1] = memory.readbyte(MemPowerUpState) > 0 and 2 or AIView[viewX][viewY-1]
             elseif xAddress >= 1 and xAddress < 32 and yAddress >= 1 and yAddress <= 25 then
                 AIView[viewX][viewY] = tileMap[xAddress + 16*yAddress]
             else
