@@ -9,7 +9,7 @@ class SuperMarioBrosEnvironment(gym.Env):
     def __init__(self) -> None:
         super().__init__()
         self.action_space = spaces.MultiDiscrete([5, 2, 2])
-        self.observation_space = spaces.Box(low=0, high=3, shape=(12, 10), dtype='uint8') # TODO: Check this
+        self.observation_space = spaces.Box(low=0, high=8, shape=(12, 10), dtype='uint8')
         self.max_x_position = 44 # This is Mario's starting position
         self.serve()
 
