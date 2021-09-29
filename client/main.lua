@@ -8,6 +8,10 @@ local MemPlayerX = 0x86
 local MemPlayerY = 0x3B8
 local MemPlayerScreenX = 0x6D
 local MemPowerUpState = 0x756
+local MemPowerUpShown = 0x14 
+local MemPowerUpX = 0x8C
+local MemPowerUpY = 0x3B9
+local MemPowerUpScreenX = 0x73
 local MemEnemy = 0xF              -- Start range for enemies (up to 5)
 local MemEnemyX = 0x87
 local MemEnemyY = 0xCF
@@ -156,6 +160,24 @@ end
 
 local function get_map_data()
 
+    local function set_data(mapData, x, y, value)
+        local page = math.floor(x/16)
+        local xAddress = x - 16*page+1
+        local yAddress = y - 1 + 13*(page%2)
+        if xAddress >= 1 and xAddress < 32 and yAddress >= 1 and yAddress <= 25 then 
+            mapData[xAddress + 16*yAddress] = value
+        end
+    end
+
+    local function get_positions(memoryX, memoryY, memoryScreenX, xOffset, yOffset)
+        local positions = {}
+        x = memory.readbyte(memoryX) + memory.readbyte(memoryScreenX)*0x100 - xOffset
+        y = memory.readbyte(memoryY) + yOffset
+        positions.X = math.floor((x%512)/16)+1
+        positions.Y = math.floor((y-32)/16)
+        return positions
+    end
+
     local function get_enemies()
 
         local enemyMaxCount = 5 --Maximum amount of enemies on screen
@@ -164,20 +186,13 @@ local function get_map_data()
         for i=1, enemyMaxCount do        
             enemies[i] = {}
             if memory.readbyte(MemEnemy+(i-1)) ~= 0 then
-                local enemyX = memory.readbyte(MemEnemyX+(i-1)) + memory.readbyte(MemEnemyScreenX+(i-1))*0x100
-                local enemyY = memory.readbyte(MemEnemyY+(i-1)) + 24
-                enemies[i].X = math.floor((enemyX%512)/16)+1
-                enemies[i].Y = math.floor((enemyY-32)/16)
+                enemies[i] = get_positions(MemEnemyX+(i-1), MemEnemyY+(i-1), MemEnemyScreenX+(i-1), 0, 24)
             else
                 enemies[i] = -1
             end
         end
     
         return enemies
-    end
-
-    local function get_powerup()
-
     end
 
     object_id = {
@@ -205,14 +220,14 @@ local function get_map_data()
     local enemies = get_enemies()
     for i=1, #enemies do
 		if memory.readbyte(MemEnemy+(i-1)) ~= 0 then
-			local page = math.floor(enemies[i].X/16)
-			local xAddress = enemies[i].X - 16*page+1
-			local yAddress = enemies[i].Y - 1 + 13*(page%2)
-			if xAddress >= 1 and xAddress < 32 and yAddress >= 1 and yAddress <= 25 then 
-				mapData[xAddress + 16*yAddress] = 3
-			end
+            set_data(mapData, enemies[i].X, enemies[i].Y, 3)
 		end
 	end
+
+    if memory.readbyte(MemPowerUpShown) == 1 then
+        local powerup = get_positions(MemPowerUpX, MemPowerUpY, MemPowerUpScreenX, 4, 36)
+        set_data(mapData, powerup.X, powerup.Y, 5)
+    end
 
     return mapData
 end
@@ -295,6 +310,9 @@ while true do
 
     draw_controls(controls)
     draw_ai_view(view)
+
+    --print("X: " .. playerstate.x .. " | Y: " .. playerstate.y)
+    --print("Xp: " .. playerstate.MapX .. " | Yp: " .. playerstate.MapY)
 
     emu:frameadvance()
 end
