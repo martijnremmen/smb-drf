@@ -174,10 +174,15 @@ local function get_map_data()
         return enemies
     end
 
+    local function get_powerup()
+
+    end
+
     object_id = {
         [0xC2] = 4,     --Coins
         [81] = 6,       --Breakable Blocks
         [82] = 6,
+        [0x23] = 6,
         [0xC1] = 7,     --Special Blocks
         [0xC0] = 7
     }
@@ -228,23 +233,35 @@ end
 local function draw_ai_view(AIView)
 
     local object_color = {
-        [1] = "white",  --Block
-        [2] = "blue",   --Mario
-        [3] = "red",    --Enemy
-        [4] = "yellow", --Coin
-        [5] = "green",  --Powerup
+        [0] = {204,204,255,255},--Background
+        [1] = "black",          --Block
+        [2] = "blue",           --Mario
+        [3] = "red",            --Enemy
+        [4] = "yellow",         --Coin
+        [5] = "green",          --Powerup
         [6] = {153,102,0,255},  --Breakable Block
-        [7] = "orange"  --Special Block
+        [7] = "orange"          --Special Block
     }
 
-    local startX = 50
-    local startY = 50
-    local tileSize = 4
+    local startX = 30
+    local startY = 35
+    local tileSize = 2
+    local padding = 1
+    local paddingColor = {104,104,104,255}
+
+    --Background
+    gui.box(
+        startX, 
+        startY, 
+        startX + (tileSize * #AIView) + (padding * #AIView) + padding,
+        startY + (tileSize * #AIView[1]) + (padding * #AIView[1]) + padding,
+        paddingColor
+    )
 
     for x = 1, #AIView do
         for y = 1, #AIView[x] do
-            local currentX = startX + x * tileSize
-            local currentY = startY + y * tileSize
+            local currentX = startX + ((x-1) * tileSize) + padding * (x-1) + padding
+            local currentY = startY + ((y-1) * tileSize) + padding * (y-1) + padding
             gui.box(
                 currentX, 
                 currentY, 
@@ -276,8 +293,6 @@ while true do
 
     draw_controls(controls)
     draw_ai_view(view)
-
-    print(playerstate.x)
 
     emu:frameadvance()
 end
