@@ -7,10 +7,17 @@ port = 6969
 local MemPlayerX = 0x86
 local MemPlayerY = 0x3B8
 local MemPlayerScreenX = 0x6D
+local MemPowerUpState = 0x756
+local MemPowerUpShown = 0x14 
+local MemPowerUpOnScreen = 0x1B
+local MemPowerUpX = 0x8C
+local MemPowerUpY = 0x3B9
+local MemPowerUpScreenX = 0x73
 local MemEnemy = 0xF              -- Start range for enemies (up to 5)
 local MemEnemyX = 0x87
 local MemEnemyY = 0xCF
 local MemEnemyScreenX = 0x6E
+local MemEnemyState = 0x1E
 local MemViewPortY = 0xB5
 
 local startState = savestate.object(10)
@@ -130,6 +137,7 @@ local function get_view_data(player, tileMap)
 
             if x == player.MapX-1 and y == player.MapY-1 then
                 AIView[viewX][viewY] = 2 --Mark™
+                AIView[viewX][viewY-1] = memory.readbyte(MemPowerUpState) > 0 and 2 or AIView[viewX][viewY-1]
             elseif xAddress >= 1 and xAddress < 32 and yAddress >= 1 and yAddress <= 25 then
                 AIView[viewX][viewY] = tileMap[xAddress + 16*yAddress]
             else
@@ -154,6 +162,24 @@ end
 
 local function get_map_data()
 
+    local function set_data(mapData, x, y, value)
+        local page = math.floor(x/16)
+        local xAddress = x - 16*page+1
+        local yAddress = y - 1 + 13*(page%2)
+        if xAddress >= 1 and xAddress < 32 and yAddress >= 1 and yAddress <= 25 then 
+            mapData[xAddress + 16*yAddress] = value
+        end
+    end
+
+    local function get_positions(memoryX, memoryY, memoryScreenX, xOffset, yOffset)
+        local positions = {}
+        x = memory.readbyte(memoryX) + memory.readbyte(memoryScreenX)*0x100 - xOffset
+        y = memory.readbyte(memoryY) + yOffset
+        positions.X = math.floor((x%512)/16)+1
+        positions.Y = math.floor((y-32)/16)
+        return positions
+    end
+
     local function get_enemies()
 
         local enemyMaxCount = 5 --Maximum amount of enemies on screen
@@ -162,10 +188,7 @@ local function get_map_data()
         for i=1, enemyMaxCount do        
             enemies[i] = {}
             if memory.readbyte(MemEnemy+(i-1)) ~= 0 then
-                local enemyX = memory.readbyte(MemEnemyX+(i-1)) + memory.readbyte(MemEnemyScreenX+(i-1))*0x100
-                local enemyY = memory.readbyte(MemEnemyY+(i-1)) + 24
-                enemies[i].X = math.floor((enemyX%512)/16)+1
-                enemies[i].Y = math.floor((enemyY-32)/16)
+                enemies[i] = get_positions(MemEnemyX+(i-1), MemEnemyY+(i-1), MemEnemyScreenX+(i-1), 0, 24)
             else
                 enemies[i] = -1
             end
@@ -174,12 +197,26 @@ local function get_map_data()
         return enemies
     end
 
+    object_id = {
+        [0xC2] = 4,     --Coins
+        [81] = 6,       --Breakable Blocks (With some hidden specials)
+        [82] = 6,
+        [87] = 6,
+        [88] = 6,
+        [0x23] = 6,
+        [0xC1] = 7,     --Special Blocks
+        [0xC0] = 7,
+        [0x60] = 8      --Invisible Block
+    }
+
     local tileDataTotal = 208
     local mapData = {}
 
 	for i = 1, 2 * tileDataTotal do
-		if memory.readbyte(0x500 + i-1) ~= 0 then
-			mapData[i] = 1
+        local tileId = memory.readbyte(0x500 + i-1)
+        local objectId = object_id[tileId]
+		if tileId ~= 0 then
+			mapData[i] = (objectId ~= nil and objectId or 1)    --Defaults to block id if not defined in object_id table
 		else
 			mapData[i] = 0
 		end
@@ -187,15 +224,15 @@ local function get_map_data()
 
     local enemies = get_enemies()
     for i=1, #enemies do
-		if memory.readbyte(MemEnemy+(i-1)) ~= 0 then
-			local page = math.floor(enemies[i].X/16)
-			local xAddress = enemies[i].X - 16*page+1
-			local yAddress = enemies[i].Y - 1 + 13*(page%2)
-			if xAddress >= 1 and xAddress < 32 and yAddress >= 1 and yAddress <= 25 then 
-				mapData[xAddress + 16*yAddress] = 3
-			end
+		if memory.readbyte(MemEnemy+(i-1)) ~= 0 and memory.readbyte(MemEnemyState+(i-1)) ~= 0x22 then
+            set_data(mapData, enemies[i].X, enemies[i].Y, 3)
 		end
 	end
+
+    if memory.readbyte(MemPowerUpShown) == 1 and memory.readbyte(MemPowerUpOnScreen) == 0x2E then
+        local powerup = get_positions(MemPowerUpX, MemPowerUpY, MemPowerUpScreenX, 4, 36)
+        set_data(mapData, powerup.X, powerup.Y, 5)
+    end
 
     return mapData
 end
@@ -217,28 +254,43 @@ end
 
 local function draw_ai_view(AIView)
 
-    local function get_color(value)
-        if      value == 1 then return "white"   --Block
-        elseif  value == 2 then return "blue"    --Mario
-        elseif  value == 3 then return "red"     --Enemy
-        else return "black"
-        end
-    end
+    local object_color = {
+        [0] = {204,204,255,255},--Background
+        [1] = "black",          --Block
+        [2] = "blue",           --Mario
+        [3] = "red",            --Enemy
+        [4] = "yellow",         --Coin
+        [5] = "green",          --Powerup
+        [6] = {153,102,0,255},  --Breakable Block
+        [7] = "orange",         --Special Block
+        [8] = "magenta"         --Invisible Block
+    }
 
-    local startX = 50
-    local startY = 50
-    local tileSize = 4
+    local startX = 30
+    local startY = 35
+    local tileSize = 2
+    local padding = 1
+    local paddingColor = {104,104,104,255}
+
+    --Background
+    gui.box(
+        startX, 
+        startY, 
+        startX + (tileSize * #AIView) + (padding * #AIView) + padding,
+        startY + (tileSize * #AIView[1]) + (padding * #AIView[1]) + padding,
+        paddingColor
+    )
 
     for x = 1, #AIView do
         for y = 1, #AIView[x] do
-            local currentX = startX + x * tileSize
-            local currentY = startY + y * tileSize
+            local currentX = startX + ((x-1) * tileSize) + padding * (x-1) + padding
+            local currentY = startY + ((y-1) * tileSize) + padding * (y-1) + padding
             gui.box(
                 currentX, 
                 currentY, 
                 currentX + tileSize, 
                 currentY + tileSize, 
-                get_color(AIView[x][y])
+                object_color[AIView[x][y]]
             )
         end
     end
@@ -264,6 +316,9 @@ while true do
 
     draw_controls(controls)
     draw_ai_view(view)
+
+    --print("X: " .. playerstate.x .. " | Y: " .. playerstate.y)
+    --print("Xp: " .. playerstate.MapX .. " | Yp: " .. playerstate.MapY)
 
     emu:frameadvance()
 end
