@@ -13,6 +13,7 @@ local MemPowerUpOnScreen = 0x1B
 local MemPowerUpX = 0x8C
 local MemPowerUpY = 0x3B9
 local MemPowerUpScreenX = 0x73
+local MemPowerUpState = 0x23
 local MemEnemy = 0xF              -- Start range for enemies (up to 5)
 local MemEnemyX = 0x87
 local MemEnemyY = 0xCF
@@ -229,7 +230,9 @@ local function get_map_data()
 		end
 	end
 
-    if memory.readbyte(MemPowerUpShown) == 1 and memory.readbyte(MemPowerUpOnScreen) == 0x2E then
+    if memory.readbyte(MemPowerUpShown) == 1 and 
+       memory.readbyte(MemPowerUpOnScreen) == 0x2E and 
+       memory.readbyte(MemPowerUpState) >= 0x07 then
         local powerup = get_positions(MemPowerUpX, MemPowerUpY, MemPowerUpScreenX, 4, 36)
         set_data(mapData, powerup.X, powerup.Y, 5)
     end
