@@ -53,6 +53,7 @@ class SuperMarioBrosEnvironment(gym.Env):
         ))
         self.conn.send(pkt)
         r = server.receive_pkt(self.conn) # After sending we should receive a response
+        self.max_x_position = 44
         observation, _, _, _ = self._response_to_output(r)
         return observation # Apparently `reset` should only return an observation 
 
