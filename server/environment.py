@@ -52,7 +52,7 @@ class SuperMarioBrosEnvironment(gym.Env):
             reset = True
         ))
         self.conn.send(pkt)
-        r = self.conn.recv(255) # After sending we should receive a response
+        r = server.receive_pkt(self.conn) # After sending we should receive a response
         observation, _, _, _ = self._response_to_output(r)
         return observation # Apparently `reset` should only return an observation 
 
@@ -72,7 +72,7 @@ class SuperMarioBrosEnvironment(gym.Env):
             reset = False
         ))
         self.conn.send(pkt)
-        r = self.conn.recv(255)
+        r = server.receive_pkt(self.conn)
         
         return self._response_to_output(r)
 
