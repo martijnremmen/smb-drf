@@ -175,7 +175,11 @@ local function get_map_data()
     end
 
     object_id = {
-        [0xC2] = 4     --Coins   
+        [0xC2] = 4,     --Coins
+        [81] = 6,       --Breakable Blocks
+        [82] = 6,
+        [0xC1] = 7,     --Special Blocks
+        [0xC0] = 7
     }
 
     local tileDataTotal = 208
@@ -228,7 +232,9 @@ local function draw_ai_view(AIView)
         [2] = "blue",   --Mario
         [3] = "red",    --Enemy
         [4] = "yellow", --Coin
-        [5] = "green"   --Powerup
+        [5] = "green",  --Powerup
+        [6] = {153,102,0,255},  --Breakable Block
+        [7] = "orange"  --Special Block
     }
 
     local startX = 50
