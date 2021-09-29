@@ -28,8 +28,9 @@ class SuperMarioBrosEnvironment(gym.Env):
             reset = True
         ))
         self.conn.send(pkt)
-        self.conn.recv(1024) # After sending we should receive a response
-        return
+        r = server.receive_pkt(self.conn) # After sending we should receive a response
+        observation, _, _, _ = self._response_to_output(r)
+        return observation # Apparently `reset` should only return an observation 
 
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid " % (
@@ -47,8 +48,7 @@ class SuperMarioBrosEnvironment(gym.Env):
             reset = False
         ))
         self.conn.send(pkt)
-        r = self.conn.recv(255)
-        r = server.deserialize_packet(r)
+        r = server.receive_pkt(self.conn)
         
         observation = r['view']
         reward = r['score']
