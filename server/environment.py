@@ -10,13 +10,13 @@ class SuperMarioBrosEnvironment(gym.Env):
         super().__init__()
         self.action_space = spaces.MultiDiscrete([5, 2, 2])
         self.observation_space = spaces.Box(low=0, high=3, shape=(12, 10), dtype='uint8') # TODO: Check this
-        self._previous_x_position = 0
+        self.max_x_position = 44 # This is Mario's starting position
         self.serve()
 
     def _get_reward(self, position):
-        if position > self._previous_x_position:
+        if position > self.max_x_position:
             reward = 1
-            self._previous_x_position = position
+            self.max_x_position = position
         else:
             reward = -1
         return reward
