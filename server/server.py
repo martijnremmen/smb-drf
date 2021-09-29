@@ -5,7 +5,7 @@ import socket
 
 import numpy as np
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 BIND_ADDRESS = '127.0.0.1'
 BIND_PORT = 6969
