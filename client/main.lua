@@ -7,6 +7,7 @@ port = 6969
 local MemPlayerX = 0x86
 local MemPlayerY = 0x3B8
 local MemPlayerScreenX = 0x6D
+local MemPowerUpState = 0x756
 local MemEnemy = 0xF              -- Start range for enemies (up to 5)
 local MemEnemyX = 0x87
 local MemEnemyY = 0xCF
@@ -130,6 +131,7 @@ local function get_view_data(player, tileMap)
 
             if x == player.MapX-1 and y == player.MapY-1 then
                 AIView[viewX][viewY] = 2 --Mark™
+                AIView[viewX][viewY-1] = memory.readbyte(MemPowerUpState) > 0 and 2 or AIView[viewX-1][viewY]
             elseif xAddress >= 1 and xAddress < 32 and yAddress >= 1 and yAddress <= 25 then
                 AIView[viewX][viewY] = tileMap[xAddress + 16*yAddress]
             else
