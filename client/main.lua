@@ -9,6 +9,7 @@ local MemPlayerY = 0x3B8
 local MemPlayerScreenX = 0x6D
 local MemPowerUpState = 0x756
 local MemPowerUpShown = 0x14 
+local MemPowerUpOnScreen = 0x1B
 local MemPowerUpX = 0x8C
 local MemPowerUpY = 0x3B9
 local MemPowerUpScreenX = 0x73
@@ -16,6 +17,7 @@ local MemEnemy = 0xF              -- Start range for enemies (up to 5)
 local MemEnemyX = 0x87
 local MemEnemyY = 0xCF
 local MemEnemyScreenX = 0x6E
+local MemEnemyState = 0x1E
 local MemViewPortY = 0xB5
 
 local startState = savestate.object(10)
@@ -197,11 +199,14 @@ local function get_map_data()
 
     object_id = {
         [0xC2] = 4,     --Coins
-        [81] = 6,       --Breakable Blocks
+        [81] = 6,       --Breakable Blocks (With some hidden specials)
         [82] = 6,
+        [87] = 6,
+        [88] = 6,
         [0x23] = 6,
         [0xC1] = 7,     --Special Blocks
-        [0xC0] = 7
+        [0xC0] = 7,
+        [0x60] = 8      --Invisible Block
     }
 
     local tileDataTotal = 208
@@ -219,12 +224,12 @@ local function get_map_data()
 
     local enemies = get_enemies()
     for i=1, #enemies do
-		if memory.readbyte(MemEnemy+(i-1)) ~= 0 then
+		if memory.readbyte(MemEnemy+(i-1)) ~= 0 and memory.readbyte(MemEnemyState+(i-1)) ~= 0x22 then
             set_data(mapData, enemies[i].X, enemies[i].Y, 3)
 		end
 	end
 
-    if memory.readbyte(MemPowerUpShown) == 1 then
+    if memory.readbyte(MemPowerUpShown) == 1 and memory.readbyte(MemPowerUpOnScreen) == 0x2E then
         local powerup = get_positions(MemPowerUpX, MemPowerUpY, MemPowerUpScreenX, 4, 36)
         set_data(mapData, powerup.X, powerup.Y, 5)
     end
@@ -257,7 +262,8 @@ local function draw_ai_view(AIView)
         [4] = "yellow",         --Coin
         [5] = "green",          --Powerup
         [6] = {153,102,0,255},  --Breakable Block
-        [7] = "orange"          --Special Block
+        [7] = "orange",         --Special Block
+        [8] = "magenta"         --Invisible Block
     }
 
     local startX = 30
