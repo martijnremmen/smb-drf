@@ -9,7 +9,7 @@ class SuperMarioBrosEnvironment(gym.Env):
     def __init__(self) -> None:
         super().__init__()
         self.action_space = spaces.MultiDiscrete([5, 2, 2])
-        self.observation_space = spaces.Box(low=0, high=3, shape=(12, 10), dtype='uint8') # TODO: Check this
+        self.observation_space = spaces.Box(low=0, high=8, shape=(12, 10), dtype='uint8')
         self.max_x_position = 44 # This is Mario's starting position
         self.serve()
 
@@ -74,22 +74,12 @@ class SuperMarioBrosEnvironment(gym.Env):
         ))
         self.conn.send(pkt)
         r = server.receive_pkt(self.conn)
-        r = server.deserialize_packet(r)
-         
-        observation = r['view']
-        reward = r['score']
-        done = (    
-            r['playerstate'] == 4   or  # Sliding down the pole
-            r['playerstate'] == 11  or  # Dying animation
-            r['viewport_y']  >= 2       # Fallen down hole
-        )
-        info = None
-        
-        return observation, reward, done, info
+        return self._response_to_output(r)
+
 
     def close(self):
         self.conn.close()
-        pass
+        return
     
 
     def render(self, mode="human") -> None:
