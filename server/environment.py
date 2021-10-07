@@ -95,3 +95,14 @@ class SuperMarioBrosEnvironment(gym.Env):
 
     def render(self, mode="human") -> None:
         return None
+
+
+def main():
+    env = SuperMarioBrosEnvironment()
+    while True:
+        obs, reward, done, info = env.step([0, 0, 0])
+        if done:
+            env.reset()
+
+if __name__ == "__main__":
+    main()
