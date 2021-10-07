@@ -10,9 +10,31 @@ logging.basicConfig(level=logging.INFO)
 BIND_ADDRESS = '127.0.0.1'
 BIND_PORT = 6969
 
+
 def main():
     con, addr = get_connection()
-    handle_client(con, addr)
+
+    logging.info(f"Client {addr[0]}:{addr[1]} connected")
+
+    while True:
+        r = receive_pkt(con)
+        if not r: break
+        deserialize_packet(r)
+        pkt = serialize_packet(dict(
+            up = False,
+            right = False,
+            down = False,
+            left = False,
+            a = False,
+            b = False,
+            reset = False
+        ))
+        con.send(pkt)
+
+    con.close()
+
+    logging.info(f"Client {addr[0]}:{addr[1]} disconnected")
+
 
 def get_connection(
         address: str = BIND_ADDRESS, 
@@ -25,21 +47,6 @@ def get_connection(
         logging.info(f"listening on {s.getsockname()[0]}:{s.getsockname()[1]}")
     
         return s.accept()
-
-
-def handle_client(c: socket.socket, addr):
-    logging.info(f"Client {addr[0]}:{addr[1]} connected")
-
-    while True:
-        r = c.recv(4096)
-        if not r:
-            break
-        deserialize_packet(r)
-        c.send(serialize_packet())
-    
-
-    c.close()
-    logging.info(f"Client {addr[0]}:{addr[1]} disconnected")
 
 
 def receive_pkt(conn: socket.socket) -> bytes:
