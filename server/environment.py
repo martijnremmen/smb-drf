@@ -10,22 +10,33 @@ class SuperMarioBrosEnvironment(gym.Env):
         super().__init__()
         self.action_space = spaces.MultiDiscrete([5, 2, 2])
         self.observation_space = spaces.Box(low=0, high=8, shape=(12, 10), dtype='uint8')
-        self.max_x_position = 44 # This is Mario's starting position
+
+        self._previous_x_position = 44
         self.serve()
 
-    def _get_reward(self, position):
-        if position > self.max_x_position:
-            reward = 1
-            self.max_x_position = position
-        else:
-            reward = -1
+    def _get_reward(self, gamestate) -> float:
+        reward = 0
+
+        reward += gamestate['x_position'] - self._previous_x_position
+        self._previous_x_position = gamestate['x_position']
+
+        if gamestate['playerstate'] == 11:
+            reward += -10
+
+        if gamestate['playerstate'] == 4:
+            reward += 100
+
+        reward += -0.5
+
+        reward *= 400 - gamestate['time']
+
         return reward
 
     def _response_to_output(self, r: dict):
         r = server.deserialize_packet(r)
         
         observation = r['view']
-        reward = self._get_reward(r['x_position'])
+        reward = self._get_reward(r)
         done = (    
             r['playerstate'] == 4   or  # Sliding down the pole
             r['playerstate'] == 11  or  # Dying animation
@@ -53,7 +64,7 @@ class SuperMarioBrosEnvironment(gym.Env):
         ))
         self.conn.send(pkt)
         r = server.receive_pkt(self.conn) # After sending we should receive a response
-        self.max_x_position = 44
+        self._previous_x_position = 44
         observation, _, _, _ = self._response_to_output(r)
         return observation # Apparently `reset` should only return an observation 
 
