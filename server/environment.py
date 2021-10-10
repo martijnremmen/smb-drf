@@ -38,7 +38,7 @@ class SuperMarioBrosEnvironment(gym.Env):
 
         return reward
 
-    def _response_to_output(self, r: dict):
+    def _response_to_output(self, r: bytes):
         r = server.deserialize_packet(r)
         
         observation = r['view']
