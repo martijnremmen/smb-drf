@@ -17,18 +17,24 @@ class SuperMarioBrosEnvironment(gym.Env):
     def _get_reward(self, gamestate) -> float:
         reward = 0
 
+        # Reward for progressing to the right
         reward += gamestate['x_position'] - self._previous_x_position
         self._previous_x_position = gamestate['x_position']
 
-        if gamestate['playerstate'] == 11:
+        # Dying and falling out of viewport are punished
+        if gamestate['playerstate'] == 11 or\
+            gamestate['viewport_y'] >= 2:
             reward += -10
 
+        # Reaching the finish flag is rewarded (based on the 'sliding' playerstate)
         if gamestate['playerstate'] == 4:
             reward += 100
 
+        # Passing of time is punished (quicker runs are better)
         reward += -0.5
 
-        reward *= 400 - gamestate['time']
+        # Future rewards have larger weight
+        reward *= (400 - gamestate['time']) / 400
 
         return reward
 
