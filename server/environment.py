@@ -14,12 +14,15 @@ class SuperMarioBrosEnvironment(gym.Env):
         self._previous_x_position = 44
         self.serve()
 
-    def _get_reward(self, gamestate) -> float:
+    def _get_reward(self, gamestate: dict, controls: dict) -> float:
         reward = 0
 
         # Reward for progressing to the right
         reward += gamestate['x_position'] - self._previous_x_position
         self._previous_x_position = gamestate['x_position']
+
+        # Pressing buttons is not free
+        reward -= sum([int(control) for control in controls.values()]) * 0.01
 
         # Dying and falling out of viewport are punished
         if gamestate['playerstate'] == 11 or\
@@ -38,11 +41,11 @@ class SuperMarioBrosEnvironment(gym.Env):
 
         return reward
 
-    def _response_to_output(self, r: bytes):
+    def _response_to_output(self, r: bytes, controls: dict):
         r = server.deserialize_packet(r)
         
         observation = r['view']
-        reward = self._get_reward(r)
+        reward = self._get_reward(r, controls)
         done = (    
             r['playerstate'] == 4   or  # Sliding down the pole
             r['playerstate'] == 11  or  # Dying animation
@@ -71,7 +74,7 @@ class SuperMarioBrosEnvironment(gym.Env):
         self.conn.send(pkt)
         r = server.receive_pkt(self.conn) # After sending we should receive a response
         self._previous_x_position = 44
-        observation, _, _, _ = self._response_to_output(r)
+        observation, _, _, _ = self._response_to_output(r, {})
         return observation # Apparently `reset` should only return an observation 
 
     def step(self, action):
@@ -80,7 +83,7 @@ class SuperMarioBrosEnvironment(gym.Env):
             type(action),
         )
 
-        pkt = server.serialize_packet(dict(
+        controls = dict(
             up = action[0] == 1,
             right = action[0] == 2,
             down = action[0] == 3,
@@ -88,10 +91,12 @@ class SuperMarioBrosEnvironment(gym.Env):
             a = action[1] == 1,
             b = action[2] == 1,
             reset = False
-        ))
+        )
+
+        pkt = server.serialize_packet(controls)
         self.conn.send(pkt)
         r = server.receive_pkt(self.conn)
-        return self._response_to_output(r)
+        return self._response_to_output(r, controls)
 
 
     def close(self):
