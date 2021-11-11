@@ -16,7 +16,7 @@ def main():
     tune.run(PPOTrainer, config={
         "env": "SMB-v0",
         "num_workers": 1,
-        "framework": "tf2"
+        "framework": "torch"
         })
 
 
