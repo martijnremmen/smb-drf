@@ -200,14 +200,14 @@ local function get_map_data()
 
     object_id = {
         [0xC2] = 4,     --Coins
-        [81] = 6,       --Breakable Blocks (With some hidden specials)
-        [82] = 6,
-        [87] = 6,
-        [88] = 6,
-        [0x23] = 6,
-        [0xC1] = 7,     --Special Blocks
-        [0xC0] = 7,
-        [0x60] = 8      --Invisible Block
+        -- [81] = 6,       --Breakable Blocks (With some hidden specials)
+        -- [82] = 6,
+        -- [87] = 6,
+        -- [88] = 6,
+        -- [0x23] = 6,
+        -- [0xC1] = 7,     --Special Blocks
+        -- [0xC0] = 7,
+        -- [0x60] = 8      --Invisible Block
     }
 
     local tileDataTotal = 208
@@ -263,10 +263,10 @@ local function draw_ai_view(AIView)
         [2] = "blue",           --Mario
         [3] = "red",            --Enemy
         [4] = "yellow",         --Coin
-        [5] = "green",          --Powerup
-        [6] = {153,102,0,255},  --Breakable Block
-        [7] = "orange",         --Special Block
-        [8] = "magenta"         --Invisible Block
+        -- [5] = "green",          --Powerup
+        -- [6] = {153,102,0,255},  --Breakable Block
+        -- [7] = "orange",         --Special Block
+        -- [8] = "magenta"         --Invisible Block
     }
 
     local startX = 30
