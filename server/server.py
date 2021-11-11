@@ -7,7 +7,7 @@ import numpy as np
 
 logging.basicConfig(level=logging.INFO)
 
-BIND_ADDRESS = '127.0.0.1'
+BIND_ADDRESS = '0.0.0.0'
 BIND_PORT = 6969
 
 
