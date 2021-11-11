@@ -1,5 +1,6 @@
 # Super Mario Bros Reinforcement Learning
 
+![Super Mario Bros with AI screenshot](screenshot.png)
 
 ## Setup
 
