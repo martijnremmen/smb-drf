@@ -9,4 +9,4 @@
 3. Build the Docker image `docker build -t smb ./`
 4. Run the Docker image `docker run -p 6969:6969 smb`
 5. Open the emulator and load the Super Mario Bros ROM (`File>Open Rom`)
-6. Run the lua script client `file>load Lua Script)`m `browse` (select client/main.lua) then `start`
+6. Run the lua script client `file>load Lua Script` `browse` (select client/main.lua) then `start`
