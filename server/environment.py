@@ -10,22 +10,42 @@ class SuperMarioBrosEnvironment(gym.Env):
         super().__init__()
         self.action_space = spaces.MultiDiscrete([5, 2, 2])
         self.observation_space = spaces.Box(low=0, high=8, shape=(12, 10), dtype='uint8')
-        self.max_x_position = 44 # This is Mario's starting position
+
+        self._previous_x_position = 44
         self.serve()
 
-    def _get_reward(self, position):
-        if position > self.max_x_position:
-            reward = 1
-            self.max_x_position = position
-        else:
-            reward = -1
+    def _get_reward(self, gamestate: dict, controls: dict) -> float:
+        reward = 0
+
+        # Reward for progressing to the right
+        reward += gamestate['x_position'] - self._previous_x_position
+        self._previous_x_position = gamestate['x_position']
+
+        # Pressing buttons is not free
+        reward -= sum([int(control) for control in controls.values()]) * 0.01
+
+        # Dying and falling out of viewport are punished
+        if gamestate['playerstate'] == 11 or\
+            gamestate['viewport_y'] >= 2:
+            reward += -10
+
+        # Reaching the finish flag is rewarded (based on the 'sliding' playerstate)
+        if gamestate['playerstate'] == 4:
+            reward += 100
+
+        # Passing of time is punished (quicker runs are better)
+        reward += -0.5
+
+        # Future rewards have larger weight
+        reward *= (400 - gamestate['time']) / 400
+
         return reward
 
-    def _response_to_output(self, r: dict):
+    def _response_to_output(self, r: bytes, controls: dict):
         r = server.deserialize_packet(r)
         
         observation = r['view']
-        reward = self._get_reward(r['x_position'])
+        reward = self._get_reward(r, controls)
         done = (    
             r['playerstate'] == 4   or  # Sliding down the pole
             r['playerstate'] == 11  or  # Dying animation
@@ -53,8 +73,8 @@ class SuperMarioBrosEnvironment(gym.Env):
         ))
         self.conn.send(pkt)
         r = server.receive_pkt(self.conn) # After sending we should receive a response
-        self.max_x_position = 44
-        observation, _, _, _ = self._response_to_output(r)
+        self._previous_x_position = 44
+        observation, _, _, _ = self._response_to_output(r, {})
         return observation # Apparently `reset` should only return an observation 
 
     def step(self, action):
@@ -63,7 +83,7 @@ class SuperMarioBrosEnvironment(gym.Env):
             type(action),
         )
 
-        pkt = server.serialize_packet(dict(
+        controls = dict(
             up = action[0] == 1,
             right = action[0] == 2,
             down = action[0] == 3,
@@ -71,10 +91,12 @@ class SuperMarioBrosEnvironment(gym.Env):
             a = action[1] == 1,
             b = action[2] == 1,
             reset = False
-        ))
+        )
+
+        pkt = server.serialize_packet(controls)
         self.conn.send(pkt)
         r = server.receive_pkt(self.conn)
-        return self._response_to_output(r)
+        return self._response_to_output(r, controls)
 
 
     def close(self):
@@ -84,3 +106,14 @@ class SuperMarioBrosEnvironment(gym.Env):
 
     def render(self, mode="human") -> None:
         return None
+
+
+def main():
+    env = SuperMarioBrosEnvironment()
+    while True:
+        obs, reward, done, info = env.step([0, 0, 0])
+        if done:
+            env.reset()
+
+if __name__ == "__main__":
+    main()
